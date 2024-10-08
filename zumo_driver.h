@@ -1,20 +1,22 @@
 float readVoltage() {
   int raw = analogRead(A1);
   float mv = raw * 3.22265;
+  // scale the voltage
+  // not sure if it's right :)))
+  mv *= (6 / 3.3);
   return mv / 1000;
 }
 
-void setup()
-{
-  //Setup the local serial interface
+void setup() {
+  // Setup the local serial interface
   Serial.begin(9600);
 
-  //Setup the wireless interface
+  // Setup the wireless interface
   Serial0.begin(115200);
   Serial0.print("Voltage: ");
   Serial0.print(readVoltage());
   Serial0.println("V");
-  
+
   // Initialize the reflectance sensors module
   reflectanceSensors.init();
 
@@ -57,7 +59,7 @@ void setup()
     reflectanceSensors.calibrate();
     delay(10);
   }
-  motors.setSpeeds(0,0);
+  motors.setSpeeds(0, 0);
 
   // Turn off LED to indicate we are through with calibration
   digitalWrite(13, LOW);
@@ -71,7 +73,6 @@ void setup()
   // Turn off LED to indicate we are through with calibration
   digitalWrite(13, LOW);
 
-  
   // Wait for the user button to be pressed and released
   Serial.println("ready to begin");
   Serial0.println("ready to begin");
@@ -83,9 +84,7 @@ void setup()
   delay(1000);
 }
 
-
-void loop()
-{
+void loop() {
   selectState();
   delay(50);
 }

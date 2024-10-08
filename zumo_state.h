@@ -4,10 +4,10 @@
  * Based on Polulu line-following example
  */
 
-#include <QTRSensors.h>
-#include <ZumoReflectanceSensorArray.h>
-#include <ZumoMotors.h>
 #include <Pushbutton.h>
+#include <QTRSensors.h>
+#include <ZumoMotors.h>
+#include <ZumoReflectanceSensorArray.h>
 
 #define condition true
 
@@ -19,4 +19,4 @@ int lastError = 0;
 
 unsigned int sensors[6];
 
-int position=0;
+int position = 0;

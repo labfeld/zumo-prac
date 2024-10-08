@@ -16,10 +16,11 @@
 
 /* -----------STATE ENCODING---------- */
 
-// These defines define the state encoding - a mapping from a name to a numerical code
-// Add new state definitions by copying the lines here and incrementing the number by one.
-// Note: make sure each encoding is unique
+// These defines define the state encoding - a mapping from a name to a
+// numerical code Add new state definitions by copying the lines here and
+// incrementing the number by one. Note: make sure each encoding is unique
 
+// Command for the robot to do
 enum class STATE {
   FORWARD,
   LEFT,
@@ -30,6 +31,7 @@ enum class STATE {
   SHARP_LEFT,
 };
 
+// Position on the track
 enum class TRACK_POS {
   END,
   LAST_BEND,
@@ -40,67 +42,49 @@ enum class TRACK_POS {
 
 /* ---------END STATE ENCODING---------- */
 
-
-
-// Create a variable to hold a state.  This should be set to the default state.
+// Set the starting state for the robot
 STATE state = STATE::FOLLOW_LINE;
 
-
+// Set the starting position for the robot
 TRACK_POS track_pos = TRACK_POS::CLR;
 
-/* -----------STATE IMPLEMENTATION---------- */
-
-// Each state should be implemented by a function.
-// Each function should also report its state to the wireless serial
-
-// Serial  - usb connected serial interface
-// Serial0 - wireless connected serial interface
-
-// Each state implements a set of actions.  In this case, we can set the motor
-// speeds.
-
-void forward()
-{
+void forward() {
   Serial.println("forward");
   Serial0.println("forward");
   motors.setSpeeds(SPEED_MAX, SPEED_MAX);
 }
 
-void turnLeft()
-{
+void turnLeft() {
   Serial.println("left");
   Serial0.println("left");
   motors.setSpeeds(SPEED_HALT, SPEED_MAX);
 }
 
-void turnRight()
-{
+void turnRight() {
   Serial.println("right");
   Serial0.println("right");
   motors.setSpeeds(SPEED_MAX, SPEED_HALT);
 }
 
-void sharpLeft()
-{
+void sharpLeft() {
   Serial.println("sharpLeft");
   Serial0.println("sharpLeft");
   motors.setSpeeds(-SPEED_MAX, SPEED_MAX);
 }
 
-void sharpRight()
-{
+void sharpRight() {
   Serial.println("sharpRight");
   Serial0.println("sharpRight");
   motors.setSpeeds(SPEED_MAX, -SPEED_MAX);
 }
 
-void halt()
-{
+void halt() {
   Serial.println("halt");
   Serial0.println("halt");
   motors.setSpeeds(SPEED_HALT, SPEED_HALT);
 }
 
+// Check whether at least 1 sensor is on the line.
 bool isOnLine() {
   unsigned int sensorReadings[6] = {0};
   reflectanceSensors.readCalibrated(sensorReadings);
@@ -117,6 +101,7 @@ bool isOnLine() {
   return nOnLine >= 1;
 }
 
+// Bang-Bang controller
 void followLine() {
   int position = reflectanceSensors.readLine(sensors);
   if (position > 2500) {
@@ -126,95 +111,92 @@ void followLine() {
   }
 }
 
-
 /* -------END STATE IMPLEMENTATION---------- */
 
 /* -----------STATE CHOICE---------- */
 
-void selectState()
-{
+void selectState() {
   static int strikes = 3;
   position = reflectanceSensors.readLine(sensors);
+
   switch (track_pos) {
-    case TRACK_POS::END:
-      Serial0.println("END");
-      state = STATE::HALT;
-      break;
-    case TRACK_POS::BLIND_GAP:
-      Serial0.println("BLIND_GAP");
-      state = STATE::FORWARD;
-      if (isOnLine()) {
-        track_pos = TRACK_POS::AWAIT_LOCK_LAST_BEND;
-      }
-      break;
-    case TRACK_POS::AWAIT_LOCK_LAST_BEND:
-      Serial0.println("AWAIT_LOCK_LAST_BEND");
-      state = STATE::SHARP_RIGHT;
-      delay(100);
-      if (isOnLine()) {
-        track_pos = TRACK_POS::LAST_BEND;
-      }
-      break;
-    case TRACK_POS::LAST_BEND:
-      Serial0.println("LAST_BEND");
-      state = STATE::FOLLOW_LINE;
-      if (!isOnLine()) {
-        strikes--;
-      } else {
-        strikes = 3;
-      }
-      if (strikes == 0) {
-        track_pos = TRACK_POS::END;
-      }
-      break;
-    case TRACK_POS::CLR: // Credit position
-      Serial0.println("CLR");
-      state = STATE::FOLLOW_LINE;
-      if (!isOnLine()) {
-        strikes--;
-      } else {
-        strikes = 3;
-      }
-      if (strikes == 0) {
-        track_pos = TRACK_POS::BLIND_GAP;
-      }
-      break;
+  case TRACK_POS::END:
+    Serial0.println("END");
+    state = STATE::HALT;
+    break;
+  case TRACK_POS::BLIND_GAP:
+    Serial0.println("BLIND_GAP");
+    state = STATE::FORWARD;
+    if (isOnLine()) {
+      track_pos = TRACK_POS::AWAIT_LOCK_LAST_BEND;
+    }
+    break;
+  case TRACK_POS::AWAIT_LOCK_LAST_BEND:
+    Serial0.println("AWAIT_LOCK_LAST_BEND");
+    state = STATE::SHARP_RIGHT;
+    delay(100);
+    if (isOnLine()) {
+      track_pos = TRACK_POS::LAST_BEND;
+    }
+    break;
+  case TRACK_POS::LAST_BEND:
+    Serial0.println("LAST_BEND");
+    state = STATE::FOLLOW_LINE;
+    if (!isOnLine()) {
+      strikes--;
+    } else {
+      strikes = 3;
+    }
+    if (strikes == 0) {
+      track_pos = TRACK_POS::END;
+    }
+    break;
+  case TRACK_POS::CLR: // Credit position
+    Serial0.println("CLR");
+    state = STATE::FOLLOW_LINE;
+    if (!isOnLine()) {
+      strikes--;
+    } else {
+      strikes = 3;
+    }
+    if (strikes == 0) {
+      track_pos = TRACK_POS::BLIND_GAP;
+    }
+    break;
   }
 
-  switch (state)
-  {
-    case STATE::FORWARD:
-      forward();
-      break;
+  switch (state) {
+  case STATE::FORWARD:
+    forward();
+    break;
 
-    case STATE::LEFT:
-      turnLeft();
-      break;
+  case STATE::LEFT:
+    turnLeft();
+    break;
 
-    case STATE::RIGHT:
-      turnRight();
-      break;
+  case STATE::RIGHT:
+    turnRight();
+    break;
 
-    case STATE::SHARP_LEFT:
-      sharpLeft();
-      break;
+  case STATE::SHARP_LEFT:
+    sharpLeft();
+    break;
 
+  case STATE::SHARP_RIGHT:
+    sharpRight();
+    break;
 
-    case STATE::SHARP_RIGHT:
-      sharpRight();
-      break;
+  case STATE::HALT:
+    halt();
+    exit(0);
+    break;
 
-    case STATE::HALT:
-      halt();
-      exit(0);
-      break;
+  case STATE::FOLLOW_LINE:
+    followLine();
+    break;
 
-    case STATE::FOLLOW_LINE:
-      followLine();
-      break;
-
-    default:
-      halt();
+  default:
+    halt();
   }
 }
 
